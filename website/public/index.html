@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA LROC Moon Map Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="title-section">
+                <h1>🌙 NASA LROC Moon Map Viewer</h1>
+                <p class="subtitle">Lunar Reconnaissance Orbiter Camera Imagery</p>
+            </div>
+            <div class="controls">
+                <select id="productSelect">
+                    <option value="">Loading products...</option>
+                </select>
+                <div class="zoom-controls">
+                    <button id="zoomOut">➖</button>
+                    <span id="zoomDisplay">Zoom: 1</span>
+                    <button id="zoomIn">➕</button>
+                </div>
+                <button id="resetView">🔄 Reset View</button>
+            </div>
+        </header>
+
+        <div class="viewer-container">
+            <canvas id="mapCanvas"></canvas>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>Loading lunar tiles...</div>
+            </div>
+            <div class="crosshair"></div>
+            <div class="floating-cache-btn">
+                <button id="quickCacheBtn" title="Quick Cache Tiles">💾 Cache</button>
+            </div>
+        </div>
+
+        <footer>
+            <div class="info-panel">
+                <div class="info-section">
+                    <h3>View Info</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Zoom Level:</span>
+                            <span id="zoomLevel">1</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Pan Position:</span>
+                            <span id="panInfo">(0, 0)</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Loaded Tiles:</span>
+                            <span id="tileCount">0</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Cache Status:</span>
+                            <span id="cacheStatus">Ready</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>Current Product</h3>
+                    <div id="productInfo">
+                        <p class="product-name">Select a product to view lunar imagery</p>
+                        <p class="product-desc">NASA LROC provides high-resolution images of the Moon's surface</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cache-panel">
+                <h3>🔽 Pre-cache Tiles (Download in background)</h3>
+                <form id="cacheForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Zoom Level:</label>
+                            <input type="number" id="cacheZoom" value="2" min="0" max="5">
+                        </div>
+                        <div class="form-group">
+                            <label>Row Range:</label>
+                            <input type="number" id="startRow" value="0" min="0"> to
+                            <input type="number" id="endRow" value="3" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Col Range:</label>
+                            <input type="number" id="startCol" value="0" min="0"> to
+                            <input type="number" id="endCol" value="3" min="0">
+                        </div>
+                        <button type="submit">Cache Tiles</button>
+                    </div>
+                </form>
+                <div id="cacheStatus2"></div>
+            </div>
+
+            <div class="instructions">
+                <strong>Controls:</strong> 🖱️ Drag to pan • 🔍 Use zoom buttons • 💾 Tiles auto-download from NASA LROC
+                <br>
+                <small>Data: NASA/GSFC/Arizona State University</small>
+            </div>
+        </footer>
+
+        <div class="team-footer">
+            <p>Made by <span>Cosmic Zoom Team</span></p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
