@@ -31,70 +31,34 @@ CACHE_SIZE = 200
 WMTS_BASE = "https://trek.nasa.gov/tiles/Moon/EQ"
 
 # NASA Trek WMTS Products - using NASA's official tile service
+# Note: Only includes verified working layers
 LROC_PRODUCTS = {
     "wac_global": {
-        "name": "WAC Global Mosaic 100m",
-        "description": "LRO Wide Angle Camera global mosaic at 100m/pixel",
+        "name": "LRO WAC Global Mosaic",
+        "description": "LRO Wide Angle Camera global mosaic at 100m/pixel - Full moon coverage",
         "layer": "LRO_WAC_Mosaic_Global_303ppd",
         "wmts_endpoint": f"{WMTS_BASE}/LRO_WAC_Mosaic_Global_303ppd/1.0.0/default/default028mm",
         "max_zoom": 7,
-        "tile_format": "jpg"
-    },
-    "wac_nearside": {
-        "name": "WAC Nearside Mosaic",
-        "description": "WAC Nearside mosaic",
-        "layer": "LRO_WAC_Mosaic_Global_303ppd",
-        "wmts_endpoint": f"{WMTS_BASE}/LRO_WAC_Mosaic_Global_303ppd/1.0.0/default/default028mm",
-        "max_zoom": 7,
-        "tile_format": "jpg"
-    },
-    "wac_farside": {
-        "name": "WAC Farside Mosaic",
-        "description": "WAC Farside mosaic",
-        "layer": "LRO_WAC_Mosaic_Global_303ppd",
-        "wmts_endpoint": f"{WMTS_BASE}/LRO_WAC_Mosaic_Global_303ppd/1.0.0/default/default028mm",
-        "max_zoom": 7,
-        "tile_format": "jpg"
-    },
-    "wac_color": {
-        "name": "WAC Color Mosaic",
-        "description": "LROC WAC Color Mosaic",
-        "layer": "LRO_WAC_Color_Mosaic_Global_303ppd",
-        "wmts_endpoint": f"{WMTS_BASE}/LRO_WAC_Color_Mosaic_Global_303ppd/1.0.0/default/default028mm",
-        "max_zoom": 5,
-        "tile_format": "jpg"
-    },
-    "lola_color": {
-        "name": "LOLA Color Shaded Relief",
-        "description": "LOLA elevation with color coding",
-        "layer": "LRO_LOLA_ClrShade_Global_128ppd_v06",
-        "wmts_endpoint": f"{WMTS_BASE}/LRO_LOLA_ClrShade_Global_128ppd_v06/1.0.0/default/default028mm",
-        "max_zoom": 6,
-        "tile_format": "png"
+        "tile_format": "jpg",
+        "auto_cache": True  # Automatically cache this product
     },
     "lola_shade": {
-        "name": "LOLA Shaded Relief",
-        "description": "LOLA elevation shaded relief",
+        "name": "LRO LOLA Shaded Relief (Grayscale)",
+        "description": "LOLA elevation shaded relief - Topographic detail in grayscale",
         "layer": "LRO_LOLA_Shade_Global_128ppd_v04",
         "wmts_endpoint": f"{WMTS_BASE}/LRO_LOLA_Shade_Global_128ppd_v04/1.0.0/default/default028mm",
         "max_zoom": 6,
-        "tile_format": "png"
+        "tile_format": "png",
+        "auto_cache": True  # Automatically cache this product
     },
-    "kaguya_morning": {
-        "name": "Kaguya Morning",
-        "description": "Kaguya Terrain Camera morning mosaic",
-        "layer": "Kaguya_TCMorningMap_Global_256ppd",
-        "wmts_endpoint": f"{WMTS_BASE}/Kaguya_TCMorningMap_Global_256ppd/1.0.0/default/default028mm",
+    "lola_color": {
+        "name": "LRO LOLA Color Shaded Relief",
+        "description": "LOLA elevation with color-coded topography - Beautiful colored terrain",
+        "layer": "LRO_LOLA_ClrShade_Global_128ppd_v04",
+        "wmts_endpoint": f"{WMTS_BASE}/LRO_LOLA_ClrShade_Global_128ppd_v04/1.0.0/default/default028mm",
         "max_zoom": 6,
-        "tile_format": "jpg"
-    },
-    "kaguya_evening": {
-        "name": "Kaguya Evening",
-        "description": "Kaguya Terrain Camera evening mosaic",
-        "layer": "Kaguya_TCEveningMap_Global_256ppd",
-        "wmts_endpoint": f"{WMTS_BASE}/Kaguya_TCEveningMap_Global_256ppd/1.0.0/default/default028mm",
-        "max_zoom": 6,
-        "tile_format": "jpg"
+        "tile_format": "png",
+        "auto_cache": True  # Automatically cache this product
     }
 }
 
@@ -432,5 +396,37 @@ if __name__ == "__main__":
     print("Products List: http://localhost:8000/products")
     print("Health Check: http://localhost:8000/health")
     print("="*70 + "\n")
-    
+
+    # Auto-cache tiles for products marked with auto_cache=True
+    import threading
+    def auto_cache_tiles():
+        import time
+        time.sleep(5)  # Wait for server to start
+        print("\n🔄 Starting automatic tile caching...")
+        for product_id, product_info in LROC_PRODUCTS.items():
+            if product_info.get('auto_cache', False):
+                print(f"📦 Auto-caching {product_info['name']}...")
+                # Cache zoom levels 0-3 for global coverage
+                for zoom in range(0, min(4, product_info['max_zoom'] + 1)):
+                    tiles_at_zoom = 2 ** zoom
+                    for row in range(tiles_at_zoom):
+                        for col in range(tiles_at_zoom):
+                            try:
+                                img = download_quickmap_tile(product_id, zoom, row, col)
+                                if img:
+                                    tile_path = TILES_DIR / product_id / f"tile_{zoom}_{row}_{col}.{product_info['tile_format']}"
+                                    tile_path.parent.mkdir(parents=True, exist_ok=True)
+                                    if product_info['tile_format'] == 'jpg':
+                                        img.save(tile_path, 'JPEG', quality=90, optimize=True)
+                                    else:
+                                        img.save(tile_path, 'PNG', optimize=True)
+                            except Exception as e:
+                                pass  # Continue on errors
+                print(f"✅ Completed auto-caching {product_info['name']}")
+        print("✅ Automatic tile caching complete!\n")
+
+    # Start auto-caching in background thread
+    cache_thread = threading.Thread(target=auto_cache_tiles, daemon=True)
+    cache_thread.start()
+
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
